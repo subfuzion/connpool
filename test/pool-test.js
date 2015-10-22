@@ -6,6 +6,7 @@ const async = require('async');
 const describe = require('mocha').describe;
 const it = require('mocha').it;
 const Pool = require('../lib/Pool');
+const Semaphore = require('../lib/Semaphore');
 
 /**
  * The pool expects a resource provider to have a getResource method
@@ -103,6 +104,46 @@ describe('connection pool tests', () => {
 
   });
 
+  it ('2nd request should timeout', function(done) {
+    this.timeout(5 * 1000);
+
+    // pool timeout will be 1 sec
+    let pool = new Pool({
+      capacity: 1,
+      timeout: 1000,
+      resourceProvider: new TestConnectionProvider(),
+      resourceOptions: { foo: 'bar' }
+    });
+
+    assert.equal(pool.capacity, 1);
+
+    async.parallel([
+      callback => {
+        pool.getResource((err, conn) => {
+          if (err) return callback(err);
+
+          // release the resource in 3 seconds - should be too late for the other request
+          setTimeout(() => {
+            pool.releaseResource(conn);
+            callback();
+          }, 3 * 1000);
+        });
+      },
+
+      callback => {
+        // Attempt to acquire a 2nd connection. It should timeout.
+
+        pool.getResource((err, conn) => {
+          assert(err instanceof Semaphore.ResourceNotAvailableError);
+          callback();
+        });
+      },
+
+    ], err => {
+      done(err);
+    });
+
+  });
 });
 
 
