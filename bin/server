@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+'use strict';
+
+const Server = require('../lib/Server');
+
+let server = new Server(process.env.PORT || 9000);
+
+server
+  .on('listening', server => {
+    console.log('server listening on port %s (max connections: %s)',
+      server.port, server.maxConnections || Infinity);
+  })
+  .on('connection', (server, socket, connectionCount) => {
+    console.log('server (port %s): new connection, total connections: %d', server.port, connectionCount);
+  })
+  .on('close', server => {
+    console.log('server closed (port %s)', server.port);
+  })
+  .on('error', (server, err) => {
+    console.log('server error (port %s): %s', server.port, err.message);
+  });
+
+// hook into sigint to shutdown server and ensure the close message is displayed
+process.on('SIGINT', () => {
+  // put a newline after ^C
+  console.log();
+  server.close(() => {
+    process.exit();
+  });
+});
+
+server.listen();
+

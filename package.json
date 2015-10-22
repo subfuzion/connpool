@@ -1,0 +1,21 @@
+{
+  "name": "connpool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/Client.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "bin": {
+    "client": "./bin/client",
+    "server": "./bin/server"
+  },
+  "author": "Tony Pujals <tony@subfuzion.com> (http://twitter.com/subfuzion)",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^1.4.2",
+    "commander": "^2.9.0",
+    "lodash": "^3.10.1",
+    "mocha": "^2.3.3"
+  }
+}

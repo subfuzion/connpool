@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+'use strict';
+
+const _ = require('lodash');
+const async = require('async');
+const Client = require('../lib/Client');
+const cli = require('commander');
+const pkg = require('../package.json');
+
+cli
+  .version(pkg.version)
+  .usage('[options] <number-of-workers>')
+  .option('-p, --pool <size>', 'Set connection pool size', parseInt);
+
+cli.parse(process.argv);
+let workerCount = cli.args[0];
+let poolSize = cli.pool;
+
+if (!workerCount) {
+  // display help and exit
+  cli.help();
+}
+
+let port = process.env.PORT || 9000;
+let client = new Client(port, poolSize);
+
+let counter = 0;
+
+// floor and ceiling of random times in seconds to simulate duration of each worker's task
+// will be used to specify latency of response times
+let min = 3;
+let max = 10;
+
+let tasks = _.times(workerCount, () => {
+  return callback => {
+    // simulate work with random response latency in seconds from min to max, inclusive
+    let work = Math.floor(Math.random() * (max - min + 1) + min);
+    let id = ++counter;
+
+    console.log('id: %d, posting work: %d', id, work);
+    client.post(id, work, (err, result) => {
+      if (err) {
+        console.error(err.message);
+      } else {
+        console.log(result);
+      }
+      callback();
+    });
+  }
+});
+
+async.parallel(tasks);
+
