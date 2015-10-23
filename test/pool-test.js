@@ -122,7 +122,8 @@ describe('connection pool tests', () => {
         pool.getResource((err, conn) => {
           if (err) return callback(err);
 
-          // release the resource in 3 seconds - should be too late for the other request
+          // release the resource in 3 seconds - this will be too late for the other
+          // request, which is expected to timeout for this test to pass.
           setTimeout(() => {
             pool.releaseResource(conn);
             callback();
@@ -132,7 +133,6 @@ describe('connection pool tests', () => {
 
       callback => {
         // Attempt to acquire a 2nd connection. It should timeout.
-
         pool.getResource((err, conn) => {
           assert(err instanceof Semaphore.ResourceNotAvailableError);
           callback();
